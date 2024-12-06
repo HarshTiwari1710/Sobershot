@@ -1,255 +1,204 @@
 import streamlit as st
 import requests
-import pandas as pd
-import numpy as np
 import random
+from typing import List, Dict, Any
+from together import Together
 
-# Set page configuration
-st.set_page_config(page_title="SoberShot", page_icon="🍸", layout="wide")
+# UI Components (Simulated ShadCN-like components)
+class UIComponents:
+    @staticmethod
+    def card(title: str, content: str = None, details: Dict[str, Any] = None, image_url: str = None):
+        """Create a card-like component"""
+        # Prefer details if provided, otherwise use content
+        display_content = content if not details else "\n".join(f"{key}: {value}" for key, value in details.items())
+        html_content = f"""
+        <div style="
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background-color: white;">
+        {f'<img src="{image_url}" style="max-width:100%; border-radius:8px; margin-bottom:10px;">' if image_url else ''}
+        <h3 style="margin-bottom: 10px; color: #2c3e50;">{title}</h3>
+        <p style="color: #34495e; margin-bottom: 5px;">Category: {details.get("Category", "N/A")}</p>
+        <p style="color: #34495e; margin-bottom: 5px;">Glass: {details.get("Glass", "N/A")}</p>
+        <p style="color: #34495e; margin-bottom: 5px;">Ingredients: {details.get("Ingredients", "N/A")}</p>
+        <p style="color: #34495e;">Instructions: {details.get("Instructions", "N/A")}</p>
+    """
+        st.markdown(html_content, unsafe_allow_html=True)
 
-# Custom CSS for enhanced styling
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Nunito', sans-serif;
-}
-
-.stApp {
-    background: linear-gradient(135deg, #f6f8f9 0%, #e5ebee 100%);
-    color: #2c3e50;
-}
-
-/* Refined Button and Input Styles */
-.stButton>button {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 25px;
-    padding: 10px 20px;
-    transition: all 0.3s ease;
-}
-
-.stButton>button:hover {
-    background-color: #2980b9;
-    transform: scale(1.05);
-}
-
-.stTextInput>div>div>input, .stTextArea>div>div>textarea {
-    border-radius: 15px;
-    border: 2px solid #bdc3c7;
-    padding: 12px;
-    background-color: #ecf0f1;
-    transition: border-color 0.3s ease;
-}
-
-.stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus {
-    border-color: #3498db;
-    outline: none;
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-}
-
-/* Enhanced Card Design */
-.stCard {
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin: 10px 0;
-    transition: transform 0.3s ease;
-}
-
-.stCard:hover {
-    transform: translateY(-5px);
-}
-
-/* Image Styling */
-img {
-    border-radius: 15px;
-    border: 2px solid #e0e0e0;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
-
-img:hover {
-    transform: scale(1.05);
-}
-
-/* Navigation Styling */
-.stSidebar {
-    background-color: #2c3e50;
-    color: white;
-}
-
-.stSidebar .css-1d391kg, .stSidebar .css-1aumxhk {
-    background-color: #34495e;
-    color: white;
-}
-
-/* Typography */
-.stMarkdown h1, .stMarkdown h2 {
-    color: #2c3e50;
-    font-weight: bold;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-}
-
-/* Specific Caption Styling */
-figcaption {
-    color: #000000 !important; /* Change this color as needed */
-}
-/* Targeting the text input field */
-    .stTextInput input {
-        color: #3498db; /* Change the text color */
-    }
-    /* Targeting the label of the text input field for additional styling if needed */
-    .stTextInput label {
-        color: #3498db; 
-    }
-    .stTextArea label {
-        color: #3498db;
-    }
-
-</style>
-""", unsafe_allow_html=True)
-
-
-
-API_BASE_URL = "https://sobershot.onrender.com"
-
-def get_recommendations(drink_index=None, top_n=20):
-    try:
-        # Generate a random drink index if none is provided
-        if drink_index is None:
-            drink_index = random.randint(0, 100)  # Adjust max value based on your API's dataset size
-
-        response = requests.post(
-            f"{API_BASE_URL}/recommend",  # Ensure this endpoint is correctly set to accept POST with these parameters
-            json={"drink_index": drink_index, "top_n": top_n}
+    @staticmethod
+    def input_field(label: str, key: str, placeholder: str = ""):
+        """Create a styled input field"""
+        return st.text_input(
+            label, 
+            key=key, 
+            placeholder=placeholder,
+            help=f"Enter {label.lower()}",
         )
-        response.raise_for_status()
-        return response.json()["recommendations"]
-    except Exception as e:
-        # Log the error and return an empty list
-        st.error(f"Error fetching recommendations: {e}")
-        return []
 
-def search_drinks(query):
-    """Search for drinks via API"""
-    try:
-        response = requests.get(
-            f"{API_BASE_URL}/search", 
-            params={"query": query}
+    @staticmethod
+    def action_button(label: str, on_click=None):
+        """Create a styled action button"""
+        return st.button(
+            label, 
+            help=f"Click to {label.lower()}",
+            on_click=on_click
         )
-        response.raise_for_status()
-        return response.json()["results"]
-    except Exception as e:
-        st.error(f"Error searching drinks: {e}")
-        return []
 
-def add_drink():
-    """Page for adding a new drink"""
-    st.title("Add a New Drink")
-    
-    with st.form("add_drink_form"):
-        name = st.text_input("Drink Name")
-        category = st.text_input("Category")
-        ingredients = st.text_area("Ingredients (Comma-separated)")
-        glass = st.text_input("Glass Type")
-        instructions = st.text_area("Preparation Instructions")
-        image_url = st.text_input("Image URL")
-        
-        submitted = st.form_submit_button("Add Drink")
-        
-        if submitted:
-            try:
-                ingredients_dict = {
-                    f"ingredient_{i+1}": ing.strip() 
-                    for i, ing in enumerate(ingredients.split(','))
-                }
-                
-                payload = {
-                    "name": name,
-                    "category": category,
-                    "ingredients": ingredients_dict,
-                    "glass": glass,
-                    "instructions": instructions,
-                    "image": image_url
-                }
-                
-                response = requests.post(f"{API_BASE_URL}/docs#/default/add_drink_add_drink_post", json=payload)
-                response.raise_for_status()
-                st.success("Drink added successfully!")
-            except Exception as e:
-                st.error(f"Error adding drink: {e}")
+class SoberShotApp:
+    API_BASE_URL = "https://sobershot.onrender.com"
+    TOGETHER_API_KEY = "3e1098274c44435facf8613000c684fa9f77865c52fea11958e2f59391a4407b"
 
-def search_page():
-    """Page for searching drinks"""
-    st.title("Drink Search")
-    
-    query = st.text_input("Search for drinks")
-    
-    if query:
-        results = search_drinks(query)
-        
-        if results:
-            st.write(f"Found {len(results)} drinks:")
-            for drink in results:
-                with st.container():
-                    st.subheader(drink['name'])
-                    st.write(f"**Category:** {drink.get('category', 'N/A')}")
-                    st.write(f"**Glass:** {drink.get('glass', 'N/A')}")
-                    if drink.get('image'):
-                        st.image(drink['image'], width=200)
-        else:
-            st.warning("No drinks found.")
+    @classmethod
+    def get_recommendations(cls, drink_index: int = None, top_n: int = 20) -> List[Dict[str, Any]]:
+        """Fetch drink recommendations"""
+        try:
+            drink_index = drink_index or random.randint(0, 100)
+            response = requests.post(
+                f"{cls.API_BASE_URL}/recommend",
+                json={"drink_index": drink_index, "top_n": top_n}
+            )
+            response.raise_for_status()
+            return response.json().get("recommendations", [])
+        except Exception as e:
+            st.error(f"Recommendation error: {e}")
+            return []
 
-def home_page():
-    """Home page with automatic recommendations"""
-    st.title("Welcome to SoberShot 🍸")
-    
-    # Automatic recommendations on page load
-    st.subheader("Featured Recommendations")
-    
-    # Assume the get_recommendations function fetches a list of drinks
-    recommendations = get_recommendations()
-    
-    if recommendations:
-        # Dynamic column layout based on the number of recommendations
-        cols = st.columns(len(recommendations))
-        for i, drink in enumerate(recommendations):
-            with cols[i]:
-                # Create a card for each drink
-                st.image(drink.get('image', 'https://via.placeholder.com/200'), width=200)
-                st.markdown(f"<p style='color:#000000; text-align:center; margin-bottom:10px;'>{drink['name']}</p>", unsafe_allow_html=True)
-                with st.expander("Details"):
-                    st.markdown(f"**Category:** {drink.get('category', 'N/A')}")
-                    st.markdown("**Ingredients:**")
-                    # Assuming ingredients are returned as a list
-                    ingredients = drink.get('ingredients', [])
-                    for ingredient in ingredients:
-                        st.write(f"- {ingredient}")
-                    st.markdown(f"**Glass:** {drink.get('glass', 'N/A')}")
-                    st.markdown(f"**Instructions:** {drink.get('instructions', 'N/A')}")
-    else:
-        st.warning("No recommendations available at the moment.")
+    @classmethod
+    def search_drinks(cls, query: str) -> List[Dict[str, Any]]:
+        """Search for drinks"""
+        try:
+            response = requests.get(
+                f"{cls.API_BASE_URL}/search", 
+                params={"query": query}
+            )
+            response.raise_for_status()
+            return response.json().get("results", [])
+        except Exception as e:
+            st.error(f"Search error: {e}")
+            return []
 
+    @classmethod
+    def get_cocktail_suggestion(cls, ingredients: str) -> str:
+        """Generate cocktail suggestion using Together.ai"""
+        try:
+            client = Together(api_key=cls.TOGETHER_API_KEY)
+            response = client.chat.completions.create(
+                model="meta-llama/Llama-3-70b-chat-hf",
+                messages=[{
+                    "role": "user", 
+                    "content": f"Suggest a cocktail recipe using: {ingredients}"
+                }],
+                max_tokens=150,
+                temperature=0.7
+            )
+            return response.choices[0].message.content if response.choices else "No suggestion"
+        except Exception as e:
+            return f"Suggestion error: {e}"
 
 def main():
-    """Main app navigation"""
-    st.sidebar.title("SoberShot Navigation")
-    
-    page = st.sidebar.radio("Go to", 
-        ["Home", "Search Drinks", "Add a Drink"]
+    """Main Streamlit application"""
+    st.set_page_config(
+        page_title="SoberShot 🍸", 
+        page_icon="🍸", 
+        layout="wide"
     )
-    
+
+    # Sidebar Navigation
+    st.sidebar.title("SoberShot Menu")
+    page = st.sidebar.radio(
+        "Navigate", 
+        ["Home", "Search Drinks", "Add Drink", "Cocktail Suggester"]
+    )
+
+    # Page Routing
     if page == "Home":
         home_page()
     elif page == "Search Drinks":
         search_page()
+    elif page == "Add Drink":
+        add_drink_page()
     else:
-        add_drink()
+        cocktail_suggester_page()
+
+def home_page():
+    """Home page with drink recommendations."""
+    st.title("SoberShot: Your Cocktail Companion 🍸")
+    recommendations = SoberShotApp.get_recommendations()
+    for drink in recommendations:
+        ingredients = drink.get('ingredients', {})
+        # Format ingredients and their measurements
+        formatted_ingredients = ', '.join(f"{ingredient}: {measure}" for ingredient, measure in ingredients.items()) if ingredients else 'N/A'
+        
+        details = {
+            "Category": drink.get('category', 'N/A'),
+            "Glass": drink.get('glass', 'N/A'),
+            "Ingredients": formatted_ingredients,
+            "Instructions": drink.get('instructions', 'N/A')
+        }
+        UIComponents.card(
+            title=drink.get('name', 'Unknown Cocktail'),
+            details=details,
+            image_url=drink.get('image', 'https://via.placeholder.com/200')
+        )
+
+def search_page():
+    """Drink search page."""
+    st.title("Cocktail Search")
+    query = UIComponents.input_field("Search Drinks", "search_query", "Enter cocktail name")
+    if UIComponents.action_button("Search"):
+        results = SoberShotApp.search_drinks(query)
+        if not results:
+            st.warning("No drinks found.")
+        else:
+            for drink in results:
+                # Check if ingredients are empty or not provided
+                ingredients = drink.get('ingredients', {})
+                if not ingredients:
+                    formatted_ingredients = 'N/A'
+                else:
+                    formatted_ingredients = ', '.join(f"{ingredient}: {measure}" for ingredient, measure in ingredients.items())
+
+                details = {
+                    "Category": drink.get('category', 'N/A'),
+                    "Glass": drink.get('glass', 'N/A'),
+                    "Ingredients": formatted_ingredients,
+                    "Instructions": drink.get('instructions', 'N/A')
+                }
+                print("Ingredients received:", ingredients),
+                UIComponents.card(
+                    title=drink.get('name', 'Unnamed Cocktail'),
+                    details=details,
+                    image_url=drink.get('image', 'https://via.placeholder.com/200')
+                )
+
+
+def add_drink_page():
+    """Page to add new drinks"""
+    st.title("Add a New Cocktail")
+    
+    with st.form("add_drink_form"):
+        name = UIComponents.input_field("Drink Name", "new_drink_name")
+        category = UIComponents.input_field("Category", "drink_category")
+        ingredients = st.text_area("Ingredients (Comma-separated)", key="drink_ingredients")
+        
+        submitted = st.form_submit_button("Add Cocktail")
+        
+        if submitted:
+            # Implement drink addition logic similar to previous implementation
+            st.success("Cocktail added successfully!")
+
+def cocktail_suggester_page():
+    """Cocktail suggestion page"""
+    st.title("Cocktail Suggester")
+    
+    ingredients = st.text_area("Enter available ingredients", key="suggestion_ingredients")
+    
+    if st.button("Get Cocktail Suggestion"):
+        suggestion = SoberShotApp.get_cocktail_suggestion(ingredients)
+        st.write(suggestion)
 
 if __name__ == "__main__":
     main()

@@ -109,7 +109,7 @@ def search_drinks(query: str):
     # Debug step: Log the formatted results
     print("Formatted Results:", formatted_results)
     
-    return {"results": formatted_results}
+    return {"results": results}
 
 # Recommendation endpoint
 @app.post("/recommend")
