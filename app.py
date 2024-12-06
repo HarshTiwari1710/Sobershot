@@ -84,7 +84,7 @@ def search_drinks(query: str):
     """
     Search for drinks by name or category.
     """
-    # Perform a case-insensitive search on the "name" and "category" fields
+    # Search for matching documents
     results = list(collection.find({"$or": [
         {"name": {"$regex": query, "$options": "i"}},
         {"category": {"$regex": query, "$options": "i"}}
@@ -93,19 +93,22 @@ def search_drinks(query: str):
     if not results:
         raise HTTPException(status_code=404, detail="No drinks found matching your query")
     
-    # Format the results to include only the specified fields
+    # Format the results to match the desired structure
     formatted_results = []
     for result in results:
         formatted_result = {
             "name": result.get("name"),
             "category": result.get("category"),
-            "ingredients": result.get("ingredients"),  # Assuming this is stored as a dict
+            "ingredients": result.get("ingredients", {}),  # Default to an empty dict if missing
             "glass": result.get("glass"),
             "instructions": result.get("instructions"),
-            "image": result.get("image")  # Assuming this is stored as a string
+            "image": result.get("image", "")  # Default to an empty string if missing
         }
         formatted_results.append(formatted_result)
 
+    # Debug step: Log the formatted results
+    print("Formatted Results:", formatted_results)
+    
     return {"results": formatted_results}
 
 # Recommendation endpoint
