@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import numpy as np
+import random
 
 # Set page configuration
 st.set_page_config(page_title="SoberShot", page_icon="🍸", layout="wide")
@@ -98,6 +99,18 @@ img:hover {
 figcaption {
     color: #000000 !important; /* Change this color as needed */
 }
+/* Targeting the text input field */
+    .stTextInput input {
+        color: #3498db; /* Change the text color */
+    }
+    /* Targeting the label of the text input field for additional styling if needed */
+    .stTextInput label {
+        color: #3498db; 
+    }
+    .stTextArea label {
+        color: #3498db;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -105,16 +118,20 @@ figcaption {
 
 API_BASE_URL = "https://sobershot.onrender.com"
 
-def get_recommendations(drink_index=0, top_n=20):
-    """Fetch drink recommendations from the API using the POST method"""
+def get_recommendations(drink_index=None, top_n=20):
     try:
+        # Generate a random drink index if none is provided
+        if drink_index is None:
+            drink_index = random.randint(0, 100)  # Adjust max value based on your API's dataset size
+
         response = requests.post(
-            f"{API_BASE_URL}/recommend",  # Correct endpoint assuming it accepts POST
+            f"{API_BASE_URL}/recommend",  # Ensure this endpoint is correctly set to accept POST with these parameters
             json={"drink_index": drink_index, "top_n": top_n}
         )
         response.raise_for_status()
         return response.json()["recommendations"]
     except Exception as e:
+        # Log the error and return an empty list
         st.error(f"Error fetching recommendations: {e}")
         return []
 
