@@ -84,14 +84,29 @@ def search_drinks(query: str):
     """
     Search for drinks by name or category.
     """
-    results = list(collection.find({"$or": [{"name": {"$regex": query, "$options": "i"}},
-                                            {"category": {"$regex": query, "$options": "i"}}]}))
+    # Perform a case-insensitive search on the "name" and "category" fields
+    results = list(collection.find({"$or": [
+        {"name": {"$regex": query, "$options": "i"}},
+        {"category": {"$regex": query, "$options": "i"}}
+    ]}))
+
     if not results:
         raise HTTPException(status_code=404, detail="No drinks found matching your query")
     
+    # Format the results to include only the specified fields
+    formatted_results = []
     for result in results:
-        result["_id"] = str(result["_id"])  # Convert ObjectId to string
-    return {"results": results}
+        formatted_result = {
+            "name": result.get("name"),
+            "category": result.get("category"),
+            "ingredients": result.get("ingredients"),  # Assuming this is stored as a dict
+            "glass": result.get("glass"),
+            "instructions": result.get("instructions"),
+            "image": result.get("image")  # Assuming this is stored as a string
+        }
+        formatted_results.append(formatted_result)
+
+    return {"results": formatted_results}
 
 # Recommendation endpoint
 @app.post("/recommend")
