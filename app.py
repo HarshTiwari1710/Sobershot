@@ -96,10 +96,19 @@ def search_drinks(query: str):
     # Format the results to match the desired structure
     formatted_results = []
     for result in results:
+        # Ensure ingredients are formatted properly or set a default message
+        ingredients = result.get("ingredients")
+        if not ingredients:
+            formatted_ingredients = "No ingredients listed"
+        elif isinstance(ingredients, dict):  # Assuming ingredients are stored as a dict
+            formatted_ingredients = ', '.join(f"{key}: {value}" for key, value in ingredients.items())
+        else:
+            formatted_ingredients = ingredients  # Use as is if it's a string or other format
+        
         formatted_result = {
             "name": result.get("name"),
             "category": result.get("category"),
-            "ingredients": result.get("ingredients", {}),  # Default to an empty dict if missing
+            "ingredients": formatted_ingredients,  # Use formatted ingredients
             "glass": result.get("glass"),
             "instructions": result.get("instructions"),
             "image": result.get("image", "")  # Default to an empty string if missing
@@ -109,7 +118,8 @@ def search_drinks(query: str):
     # Debug step: Log the formatted results
     print("Formatted Results:", formatted_results)
     
-    return {"results": results}
+    return {"results": formatted_results}
+
 
 # Recommendation endpoint
 @app.post("/recommend")
