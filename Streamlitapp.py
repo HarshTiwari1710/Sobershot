@@ -93,16 +93,19 @@ img:hover {
     border-bottom: 2px solid #3498db;
     padding-bottom: 10px;
 }
-.st-emotion-cache-ltfnpr e115fcil0{
-    color: #000000
+
+/* Specific Caption Styling */
+figcaption {
+    color: #000000 !important; /* Change this color as needed */
 }
 </style>
 """, unsafe_allow_html=True)
 
 
+
 API_BASE_URL = "https://sobershot.onrender.com"
 
-def get_recommendations(drink_index=0, top_n=5):
+def get_recommendations(drink_index=0, top_n=20):
     """Fetch drink recommendations from the API using the POST method"""
     try:
         response = requests.post(
@@ -119,7 +122,7 @@ def search_drinks(query):
     """Search for drinks via API"""
     try:
         response = requests.get(
-            f"{API_BASE_URL}/docs#/default/search_drinks_search_get", 
+            f"{API_BASE_URL}/search", 
             params={"query": query}
         )
         response.raise_for_status()
@@ -201,7 +204,8 @@ def home_page():
         for i, drink in enumerate(recommendations):
             with cols[i]:
                 # Create a card for each drink
-                st.image(drink.get('image', 'https://via.placeholder.com/200'), width=200, caption=drink['name'])
+                st.image(drink.get('image', 'https://via.placeholder.com/200'), width=200)
+                st.markdown(f"<p style='color:#000000; text-align:center; margin-bottom:10px;'>{drink['name']}</p>", unsafe_allow_html=True)
                 with st.expander("Details"):
                     st.markdown(f"**Category:** {drink.get('category', 'N/A')}")
                     st.markdown("**Ingredients:**")
