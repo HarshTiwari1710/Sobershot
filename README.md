@@ -72,6 +72,10 @@ The project leverages machine learning, deep learning, and data engineering prin
 ### Prerequisites
 1. Python 3.8 or later
 2. MongoDB database (Cloud or Local)
+3. Clone this repository 
+```bash
+https://github.com/HarshTiwari1710/Sobershot
+```
 3. Install dependencies:
    ```bash
    pip install -r requirements.txt
