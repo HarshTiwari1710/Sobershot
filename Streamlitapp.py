@@ -154,12 +154,12 @@ def search_page():
             st.warning("No drinks found.")
         else:
             for drink in results:
-                # Check if ingredients are empty or not provided
-                ingredients = drink.get('ingredients', {})
-                if not ingredients:
-                    formatted_ingredients = 'N/A'
-                else:
+                ingredients = drink.get('ingredients', 'N/A')  # Default to 'N/A' if missing
+                # Check if ingredients is a dictionary and format accordingly
+                if isinstance(ingredients, dict):
                     formatted_ingredients = ', '.join(f"{ingredient}: {measure}" for ingredient, measure in ingredients.items())
+                else:
+                    formatted_ingredients = ingredients  # Use the string directly if not a dict
 
                 details = {
                     "Category": drink.get('category', 'N/A'),
@@ -167,13 +167,14 @@ def search_page():
                     "Ingredients": formatted_ingredients,
                     "Instructions": drink.get('instructions', 'N/A')
                 }
-                print("Ingredients received:", ingredients),
                 UIComponents.card(
                     title=drink.get('name', 'Unnamed Cocktail'),
                     details=details,
                     image_url=drink.get('image', 'https://via.placeholder.com/200')
                 )
 
+
+import json
 
 def add_drink_page():
     """Page to add new drinks"""
@@ -182,13 +183,45 @@ def add_drink_page():
     with st.form("add_drink_form"):
         name = UIComponents.input_field("Drink Name", "new_drink_name")
         category = UIComponents.input_field("Category", "drink_category")
-        ingredients = st.text_area("Ingredients (Comma-separated)", key="drink_ingredients")
+        ingredients = st.text_area("Ingredients (JSON format)", key="drink_ingredients")
+        glass = UIComponents.input_field("Glass Type", "drink_glass")
+        instructions = st.text_area("Instructions", key="drink_instructions")
+        image = st.text_area("Image URL", key="drink_image")
         
         submitted = st.form_submit_button("Add Cocktail")
         
         if submitted:
-            # Implement drink addition logic similar to previous implementation
-            st.success("Cocktail added successfully!")
+            # Try to parse ingredients as JSON
+            try:
+                ingredients_json = json.loads(ingredients)
+            except json.JSONDecodeError:
+                st.error("Failed to parse ingredients. Please ensure it is valid JSON.")
+                return
+            
+            drink_data = {
+                "name": name,
+                "category": category,
+                "ingredients": ingredients_json,
+                "glass": glass,
+                "instructions": instructions,
+                "image": image
+            }
+
+            try:
+                response = requests.post(
+                    f"{SoberShotApp.API_BASE_URL}/add-drink",
+                    json=drink_data
+                )
+                response.raise_for_status()
+                result = response.json()
+                st.success(f"Cocktail added successfully! ID: {result.get('drink', {}).get('_id')}")
+            except requests.exceptions.HTTPError as e:
+                error_msg = response.json().get('detail', 'Failed to add cocktail due to an unexpected error.')
+                st.error(f"Failed to add cocktail: {error_msg}")
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
+
+
 
 def cocktail_suggester_page():
     """Cocktail suggestion page"""
